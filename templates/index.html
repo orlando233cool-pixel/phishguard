@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard | Detector de phishing</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2 4 5v6c0 5.25 3.4 9.74 8 11 4.6-1.26 8-5.75 8-11V5l-8-3z' fill='%232563eb'/></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5.3 (solo CSS; el JS de la página es propio) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --tinta: #0f172a; --azul: #2563eb; --borde: #e2e8f0; --suave: #64748b;
+            --bajo: #15803d; --medio: #b45309; --alto: #b91c1c;
+            --bajo-bg: #f0fdf4; --medio-bg: #fffbeb; --alto-bg: #fef2f2;
+        }
+        body { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; color: #1e293b; background: #f1f5f9; min-height: 100vh; }
+
+        /* ---------- Barra superior ---------- */
+        .topbar { background: #0f172a; border-bottom: 1px solid rgba(255,255,255,.08); }
+        .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .logo svg { width: 38px; height: 38px; }
+        .logo-nombre { display: block; font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -.3px; line-height: 1.1; }
+        .logo-nombre em { font-style: normal; color: #60a5fa; }
+        .logo-tag { display: block; font-size: 12px; color: #94a3b8; }
+
+        /* ---------- Panel de entrada ---------- */
+        .panel { background: #fff; border: 1px solid var(--borde); border-radius: 14px; padding: 22px; }
+        @media (min-width: 992px) { .panel-sticky { position: sticky; top: 20px; } }
+        textarea#contenido { min-height: 170px; resize: vertical; font-size: 14.5px; background: #f8fafc; }
+        .btn-analizar { background: var(--azul); border-color: var(--azul); font-weight: 700; padding: .75rem; }
+        .btn-analizar:hover { background: #1d4ed8; border-color: #1d4ed8; }
+        .ejemplo { background: none; border: 0; padding: 0; color: var(--azul); font-size: 13px; text-decoration: underline; }
+
+        /* ---------- Veredicto: la banda se tiñe según el riesgo ---------- */
+        .veredicto { border: 1px solid; border-left-width: 6px; border-radius: 14px; padding: 22px; background: var(--bg); border-color: var(--c); color: #1e293b; }
+        .nivel-BAJO  { --c: var(--bajo);  --bg: var(--bajo-bg); }
+        .nivel-MEDIO { --c: var(--medio); --bg: var(--medio-bg); }
+        .nivel-ALTO  { --c: var(--alto);  --bg: var(--alto-bg); }
+        .anillo { --p: 0; flex: 0 0 auto; width: 118px; height: 118px; border-radius: 50%;
+                  background: conic-gradient(var(--c) calc(var(--p) * 1%), rgba(15,23,42,.10) 0);
+                  display: grid; place-items: center; }
+        .anillo > div { width: 90px; height: 90px; border-radius: 50%; background: #fff; display: grid; place-items: center; text-align: center; line-height: 1; }
+        .anillo b { font-size: 30px; color: var(--c); font-weight: 800; }
+        .anillo small { display: block; font-size: 11px; color: var(--suave); margin-top: 3px; }
+        .titulo-nivel { color: var(--c); font-weight: 800; font-size: 21px; letter-spacing: -.3px; }
+
+        /* ---------- Texto anotado ---------- */
+        .anotado { white-space: pre-wrap; word-break: break-word; background: #f8fafc; border: 1px solid var(--borde);
+                   border-radius: 10px; padding: 14px 16px; line-height: 1.85; font-size: 14.5px; max-height: 340px; overflow: auto; }
+        mark.tk { padding: 1px 4px; border-radius: 4px; color: #0f172a; border-bottom: 2px solid; cursor: help; }
+        .tk-urgencia     { background: #ffedd5; border-color: #ea580c; }
+        .tk-amenaza      { background: #fee2e2; border-color: #dc2626; }
+        .tk-credenciales { background: #ede9fe; border-color: #7c3aed; }
+        .tk-verificacion { background: #dbeafe; border-color: #2563eb; }
+        .tk-accion       { background: #e0f2fe; border-color: #0284c7; }
+        .tk-premio       { background: #fce7f3; border-color: #db2777; }
+        .tk-financiero   { background: #ccfbf1; border-color: #0d9488; }
+        .tk-adjunto      { background: #fecaca; border-color: #b91c1c; }
+        .tk-ofuscacion   { background: #e2e8f0; border-color: #0f172a; }
+        .tk-dominio      { background: #fef08a; border-color: #ca8a04; }
+        .tk-ia           { background: #d1fae5; border-color: #059669; }
+        .leyenda span { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; margin: 3px 12px 3px 0; }
+        .leyenda i { width: 12px; height: 12px; border-radius: 3px; border-bottom: 2px solid; display: inline-block; }
+
+        /* ---------- Evidencia de URLs ---------- */
+        .url-caja { word-break: break-all; font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+        .ind { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-top: 1px solid var(--borde); font-size: 14px; }
+        .ind:first-child { border-top: 0; }
+        .punto { flex: 0 0 auto; width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; background: #94a3b8; }
+        .punto.alto { background: var(--alto); } .punto.medio { background: #d97706; }
+        .dato dt { font-size: 12.5px; color: var(--suave); font-weight: 600; }
+        .dato dd { margin: 0 0 10px; font-size: 14px; }
+        .seccion { background: #fff; border: 1px solid var(--borde); border-radius: 14px; padding: 20px 22px; }
+        .seccion h2 { font-size: 16px; font-weight: 700; margin: 0 0 12px; color: var(--tinta); }
+        footer { color: #94a3b8; font-size: 12.5px; }
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="container py-3">
+        <!-- Reemplaza el <svg> por tu logo si lo deseas: <img src="/static/logo.png" alt="PhishGuard" width="38"> -->
+        <a class="logo" href="/" aria-label="PhishGuard, inicio">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M12 2 4 5v6c0 5.25 3.4 9.74 8 11 4.6-1.26 8-5.75 8-11V5l-8-3z" fill="url(#gl)"/>
+                <path d="m8.6 12 2.4 2.4 4.6-4.8" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                <defs><linearGradient id="gl" x1="4" y1="2" x2="20" y2="22" gradientUnits="userSpaceOnUse"><stop stop-color="#3b82f6"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs>
+            </svg>
+            <span><span class="logo-nombre">Phish<em>Guard</em></span><span class="logo-tag">Detección de phishing con reglas e IA</span></span>
+        </a>
+    </div>
+</header>
+
+<main class="container py-4 py-lg-5">
+    <div class="row g-4">
+
+        <!-- ============ ENTRADA ============ -->
+        <div class="col-lg-5">
+            <div class="panel panel-sticky">
+                <h1 class="h4 fw-bold mb-1">Analiza un enlace o mensaje</h1>
+                <p class="text-secondary small mb-3">Pega una URL o el texto completo de un correo, SMS o mensaje sospechoso.</p>
+
+                <div class="btn-group w-100 mb-3" role="group" aria-label="Tipo de contenido">
+                    <input type="radio" class="btn-check" name="tipo" id="t-url" value="url" checked>
+                    <label class="btn btn-outline-primary" for="t-url">URL</label>
+                    <input type="radio" class="btn-check" name="tipo" id="t-correo" value="correo">
+                    <label class="btn btn-outline-primary" for="t-correo">Correo</label>
+                    <input type="radio" class="btn-check" name="tipo" id="t-mensaje" value="mensaje">
+                    <label class="btn btn-outline-primary" for="t-mensaje">SMS / mensaje</label>
+                </div>
+
+                <label for="contenido" class="form-label fw-semibold">Contenido a analizar</label>
+                <textarea id="contenido" class="form-control" spellcheck="false" maxlength="5000"
+                          placeholder="https://ejemplo-banco.com/login-verificacion"></textarea>
+                <div class="d-flex justify-content-between mt-2 small text-secondary">
+                    <span>Ejemplos: <button type="button" class="ejemplo" data-ej="url">URL sospechosa</button> ·
+                        <button type="button" class="ejemplo" data-ej="correo">correo de phishing</button></span>
+                    <span id="contador">0 / 5000</span>
+                </div>
+
+                <button id="btnAnalizar" class="btn btn-primary btn-analizar w-100 mt-3" type="button">Analizar amenaza</button>
+                <p class="small text-secondary mt-2 mb-0">Atajo: Ctrl + Enter. Los datos personales (correos, teléfonos, documentos, tarjetas) se enmascaran antes de consultar a la IA.</p>
+            </div>
+        </div>
+
+        <!-- ============ RESULTADOS ============ -->
+        <div class="col-lg-7">
+            <div id="resultado" aria-live="polite">
+                <div class="seccion text-secondary">
+                    <h2>Aquí verás el resultado</h2>
+                    Recibirás un puntaje de riesgo de 0 a 100, las palabras y patrones sospechosos resaltados en tu texto,
+                    la antigüedad y el certificado del dominio, y un reporte PDF descargable.
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="text-center py-4">
+    PhishGuard · Ningún resultado automático sustituye el criterio de un especialista en seguridad.
+</footer>
+
+<script>
+/* ---------- Utilidades ---------- */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const CATEGORIAS = {
+    urgencia: 'Urgencia', amenaza: 'Amenaza', credenciales: 'Credenciales', verificacion: 'Verificación',
+    accion: 'Llamado a la acción', premio: 'Premios u ofertas', financiero: 'Contexto financiero',
+    adjunto: 'Adjunto peligroso', ofuscacion: 'Ofuscación', dominio: 'Dominio o URL', ia: 'Señalado por la IA'
+};
+const TEXTO_NIVEL = {
+    ALTO:  ['Riesgo alto: probable phishing', 'No hagas clic ni entregues datos. Reporta el mensaje y elimínalo.'],
+    MEDIO: ['Riesgo medio: hay señales sospechosas', 'Verifica al remitente por otro canal antes de actuar.'],
+    BAJO:  ['Riesgo bajo: sin señales relevantes', 'Mantén la precaución habitual con enlaces y adjuntos.']
+};
+const EJEMPLOS = {
+    url: ['url', 'http://paypa1-secure-login.xyz/verify?account=update'],
+    correo: ['correo', 'URGENTE: su cuenta ha sido suspendida. Verifica tu cuenta en http://bcp-seguro.xyz/login antes de 24 horas o será bloqueada. Ingresa tu contraseña y el código de seguridad. Contacto: soporte@bcp-seguro.xyz'],
+};
+
+const area = document.getElementById('contenido');
+const contador = document.getElementById('contador');
+const cont = document.getElementById('resultado');
+const btn = document.getElementById('btnAnalizar');
+const PLACEHOLDER = { url: 'https://ejemplo-banco.com/login-verificacion',
+                      correo: 'Pega aquí el asunto y el cuerpo del correo…', mensaje: 'Pega aquí el mensaje recibido…' };
+
+document.querySelectorAll('input[name="tipo"]').forEach(r => r.addEventListener('change', () => { area.placeholder = PLACEHOLDER[r.value]; }));
+area.addEventListener('input', () => { contador.textContent = `${area.value.length} / 5000`; });
+area.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') analizar(); });
+btn.addEventListener('click', analizar);
+document.querySelectorAll('.ejemplo').forEach(b => b.addEventListener('click', () => {
+    const [tipo, texto] = EJEMPLOS[b.dataset.ej];
+    document.getElementById('t-' + tipo).checked = true;
+    area.value = texto; area.dispatchEvent(new Event('input')); area.placeholder = PLACEHOLDER[tipo];
+}));
+
+/* ---------- Resaltado: offsets en code points (igual que Python) ---------- */
+function resaltar(texto, tokens) {
+    const cps = Array.from(texto);
+    let out = '', pos = 0;
+    for (const t of tokens) {
+        if (t.inicio < pos || t.fin > cps.length || t.fin <= t.inicio) continue;
+        const cat = CATEGORIAS[t.categoria] ? t.categoria : 'dominio';
+        out += esc(cps.slice(pos, t.inicio).join(''));
+        out += `<mark class="tk tk-${cat}" title="${esc(CATEGORIAS[cat])}">${esc(cps.slice(t.inicio, t.fin).join(''))}</mark>`;
+        pos = t.fin;
+    }
+    return out + esc(cps.slice(pos).join(''));
+}
+
+/* ---------- Bloques de la interfaz ---------- */
+function bloqueVeredicto(d) {
+    const p = d.puntuacion, ia = d.analisis_ia || {}, c = p.componentes || {};
+    const [titulo, sub] = TEXTO_NIVEL[p.nivel] || TEXTO_NIVEL.MEDIO;
+    const barra = (nombre, v) => v == null ? '' : `
+        <div class="small mb-1 d-flex justify-content-between"><span>${nombre}</span><b>${v}/100</b></div>
+        <div class="progress mb-2" style="height:6px" role="progressbar" aria-label="${nombre}" aria-valuenow="${v}" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-bar" style="width:${v}%; background:var(--c)"></div></div>`;
+    const avisoIA = p.fuente === 'reglas locales'
+        ? `<div class="small mt-2 text-secondary">La IA no estuvo disponible (${esc(ia.motivo || 'sin detalle')}); el puntaje usa solo reglas locales.</div>` : '';
+    return `
+    <div class="veredicto nivel-${esc(p.nivel)}">
+        <div class="d-flex flex-wrap gap-4 align-items-center">
+            <div class="anillo" style="--p:${Number(p.valor) || 0}" role="img" aria-label="Puntaje de riesgo ${Number(p.valor)} de 100">
+                <div><span><b>${Number(p.valor)}</b><small>de 100</small></span></div></div>
+            <div class="flex-grow-1" style="min-width:220px">
+                <div class="titulo-nivel">${esc(titulo)}</div>
+                <div class="mb-2">${esc(sub)}</div>
+                <button type="button" class="btn btn-sm btn-dark" id="btn-pdf">Descargar reporte PDF</button>
+                ${ia.desde_cache ? '<span class="badge text-bg-light border ms-2">Respuesta en caché</span>' : ''}
+                ${avisoIA}
+            </div>
+            <div style="min-width:190px; flex: 1 1 190px">${barra('Reglas y URLs', c.heuristica)}${barra('Inteligencia artificial', c.ia)}</div>
+        </div>
+    </div>`;
+}
+
+function bloqueTexto(d) {
+    const tokens = d.tokens_detectados || [];
+    const conteo = {};
+    tokens.forEach(t => { conteo[t.categoria] = (conteo[t.categoria] || 0) + 1; });
+    const leyenda = Object.entries(conteo).map(([c, n]) =>
+        `<span><i class="tk-${CATEGORIAS[c] ? c : 'dominio'}"></i>${esc(CATEGORIAS[c] || c)} (${n})</span>`).join('');
+    return `
+    <div class="seccion">
+        <h2>Texto con hallazgos resaltados</h2>
+        <div class="anotado">${resaltar(d.contenido_analizado, tokens)}</div>
+        <div class="leyenda mt-2">${leyenda || '<span class="text-secondary">No se detectaron palabras ni patrones sospechosos.</span>'}</div>
+        ${(d.analisis_local.hallazgos || []).length ? `<ul class="small mt-2 mb-0 ps-3">${d.analisis_local.hallazgos.map(h => `<li>${esc(h)}</li>`).join('')}</ul>` : ''}
+    </div>`;
+}
+
+function bloqueUrl(u) {
+    const w = u.whois || {}, s = u.ssl || {};
+    const edad = w.edad_dias != null
+        ? `${w.edad_dias} días (creado el ${esc(w.fecha_creacion)})` : 'No disponible';
+    const ssl = s.valido === true ? `Válido · emisor ${esc(s.emisor || 'desconocido')} · vence el ${esc(s.vence)} (${s.dias_restantes} días)`
+              : s.valido === false ? `No válido: ${esc(s.error)}` : 'No disponible';
+    const ts = u.typosquatting || {};
+    const inds = (u.indicadores || []).map(i =>
+        `<div class="ind"><span class="punto ${i.puntos >= 20 ? 'alto' : i.puntos > 0 ? 'medio' : ''}"></span><div>${esc(i.texto)}</div></div>`).join('');
+    const nivel = u.score >= 60 ? 'ALTO' : u.score >= 30 ? 'MEDIO' : 'BAJO';
+    return `
+    <div class="border rounded-3 p-3 mb-3">
+        <div class="d-flex justify-content-between gap-3 mb-2">
+            <div class="url-caja">${esc(u.url)}</div>
+            <span class="badge nivel-${nivel}" style="background:var(--c);height:fit-content">${u.score}/100</span>
+        </div>
+        <dl class="dato row mb-2">
+            <div class="col-md-6"><dt>Destino final</dt><dd class="url-caja">${esc(u.url_final)}</dd></div>
+            <div class="col-md-6"><dt>Antigüedad del dominio (WHOIS)</dt><dd>${edad}</dd></div>
+            <div class="col-md-6"><dt>Certificado SSL/TLS</dt><dd>${ssl}</dd></div>
+            <div class="col-md-6"><dt>Typosquatting y homóglifos</dt><dd>${ts.sospechoso ? esc((ts.hallazgos || []).join(' ')) : 'Sin señales'}</dd></div>
+        </dl>
+        ${inds}
+    </div>`;
+}
+
+function bloqueUrls(d) {
+    const urls = d.analisis_urls || [];
+    if (!urls.length) return '';
+    return `<div class="seccion"><h2>Enlaces e infraestructura</h2>${urls.map(bloqueUrl).join('')}</div>`;
+}
+
+function bloqueIA(d) {
+    const ia = d.analisis_ia || {};
+    const frases = (ia.frases_sospechosas || []).map(f => `<span class="badge tk-ia border me-1 mb-1 fw-normal text-dark">${esc(f)}</span>`).join('');
+    return `
+    <div class="seccion">
+        <h2>Explicación de la IA</h2>
+        <p class="mb-2">${esc(ia.motivo || 'Sin explicación disponible.')}</p>
+        ${frases ? `<div class="small text-secondary mb-1">Frases señaladas</div>${frases}` : ''}
+        ${ia.modelo_usado ? `<div class="small text-secondary mt-2">Modelo: ${esc(ia.modelo_usado)}</div>` : ''}
+    </div>`;
+}
+
+function bloquePrivacidad(d) {
+    const m = (d.privacidad || {}).datos_enmascarados || {};
+    const items = Object.entries(m).map(([k, v]) => `${v} × ${k.toLowerCase()}`).join(', ');
+    return items ? `<div class="small text-secondary px-1">Antes de consultar a la IA se enmascaró: ${esc(items)}.</div>` : '';
+}
+
+/* ---------- Flujo principal ---------- */
+function mostrarMensaje(titulo, detalle) {
+    cont.innerHTML = `<div class="veredicto nivel-ALTO"><div class="titulo-nivel">${esc(titulo)}</div><div>${esc(detalle)}</div></div>`;
+}
+
+async function descargarPdf(d, boton) {
+    const etiquetaPdf = boton.textContent;
+    boton.disabled = true;
+    boton.textContent = 'Generando PDF…';
+    try {
+        const resp = await fetch('/api/report', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: d.token_reporte })
+        });
+        if (!resp.ok) {
+            let msg = 'No se pudo generar el PDF.';
+            try { msg = (await resp.json()).message || msg; } catch (_) {}
+            alert(msg);
+            return;
+        }
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'PhishGuard_reporte_' + String(d.id_analisis || '').slice(0, 8) + '.pdf';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+    } catch (err) {
+        console.error(err);
+        alert('Error de conexión al generar el PDF.');
+    } finally {
+        boton.disabled = false;
+        boton.textContent = etiquetaPdf;
+    }
+}
+
+async function analizar() {
+    const contenido = area.value.trim();
+    const tipo = document.querySelector('input[name="tipo"]:checked').value;
+    if (!contenido) { mostrarMensaje('Falta el contenido', 'Ingresa una URL o el texto que quieres analizar.'); return; }
+
+    const etiqueta = btn.textContent;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Analizando…';
+    cont.innerHTML = '<div class="seccion"><b>Analizando reglas, dominio, certificado e IA…</b><div class="small text-secondary">Puede tardar unos segundos si el dominio responde lento.</div></div>';
+
+    try {
+        const resp = await fetch('/api/analyze', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contenido, tipo })
+        });
+        const d = await resp.json();
+        if (!d.success) { mostrarMensaje('No se pudo analizar', d.message || 'Respuesta inválida del servidor.'); return; }
+
+        cont.innerHTML = `<div class="d-grid gap-3">${bloqueVeredicto(d)}${bloqueTexto(d)}${bloqueUrls(d)}${bloqueIA(d)}${bloquePrivacidad(d)}</div>`;
+        const btnPdf = document.getElementById('btn-pdf');
+        if (btnPdf) btnPdf.addEventListener('click', () => descargarPdf(d, btnPdf));
+    } catch (err) {
+        console.error(err);
+        mostrarMensaje('Error de conexión', 'No se pudo contactar con el servidor. Inténtalo de nuevo en unos segundos.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = etiqueta;
+    }
+}
+</script>
+</body>
+</html>

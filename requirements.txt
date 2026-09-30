@@ -1,0 +1,6 @@
+Flask==3.0.3
+google-genai
+python-dotenv
+requests
+reportlab
+python-whois
