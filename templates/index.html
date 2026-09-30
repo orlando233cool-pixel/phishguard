@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PhishGuard | Detector de phishing</title>
+    <title>PhishGuard | Centro de protección</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2 4 5v6c0 5.25 3.4 9.74 8 11 4.6-1.26 8-5.75 8-11V5l-8-3z' fill='%232563eb'/></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -75,14 +75,86 @@
         .seccion { background: #fff; border: 1px solid var(--borde); border-radius: 14px; padding: 20px 22px; }
         .seccion h2 { font-size: 16px; font-weight: 700; margin: 0 0 12px; color: var(--tinta); }
         footer { color: #94a3b8; font-size: 12.5px; }
+
+        /* =========================================================
+           INICIO / DASHBOARD
+           ========================================================= */
+        .vista { display: none; }
+        .vista.activa { display: block; }
+
+        .loading-state {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .pg-loader {
+            width: 22px;
+            height: 22px;
+            border: 3px solid #dbeafe;
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: pg-spin .8s linear infinite;
+            flex: 0 0 auto;
+        }
+        @keyframes pg-spin { to { transform: rotate(360deg); } }
+
+
+        /* =========================================================
+           INICIO (estilo hero oscuro)
+           ========================================================= */
+        body.modo-inicio { background: #000; }
+        body.modo-inicio .topbar { background: #000; border-bottom: 0; }
+        body.modo-inicio main.container,
+        body.modo-inicio footer { display: none; }
+        body:not(.modo-inicio) .btn-top { display: none; }
+
+        .btn-top { background: #2563eb; border-color: #2563eb; font-weight: 600; font-size: 14px; padding: .45rem .9rem; }
+        .btn-top:hover { background: #1d4ed8; border-color: #1d4ed8; }
+
+        .hero {
+            position: relative; overflow: hidden; color: #fff; background: #000;
+            min-height: calc(100vh - 68px); display: flex; flex-direction: column;
+        }
+        .hero.vista:not(.activa) { display: none; }
+        .hero.vista.activa { display: flex; }
+        .hero::before {            /* rejilla isométrica tenue */
+            content: ""; position: absolute; inset: 0; pointer-events: none;
+            background:
+                repeating-linear-gradient(30deg,  transparent 0 59px, rgba(255,255,255,.05) 59px 60px),
+                repeating-linear-gradient(-30deg, transparent 0 59px, rgba(255,255,255,.05) 59px 60px);
+            -webkit-mask-image: radial-gradient(ellipse at 50% 45%, #000 20%, transparent 75%);
+                    mask-image: radial-gradient(ellipse at 50% 45%, #000 20%, transparent 75%);
+        }
+        .hero-main { position: relative; z-index: 1; flex: 1; display: flex; align-items: center; }
+        .hero h1 { font-size: clamp(38px, 5.4vw, 76px); font-weight: 500; line-height: 1.08; letter-spacing: -2px; margin: 0; }
+        .hero h1 em { font-style: normal; color: #2f6bff; }
+        .hero-sub { color: #b4b9c4; font-size: 17px; margin: 22px 0 26px; }
+        .btn-hero { background: #2f6bff; border-color: #2f6bff; font-weight: 600; padding: .7rem 1.7rem; border-radius: 6px; }
+        .btn-hero:hover { background: #1d54e0; border-color: #1d54e0; }
+        .hero-art { width: 100%; max-width: 560px; height: auto; display: block; margin-inline: auto; }
+
+        .marquee { position: relative; z-index: 1; overflow: hidden; padding: 34px 0 40px;
+                   -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+                           mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+        .marquee-track { display: flex; width: max-content; animation: marquee 38s linear infinite; }
+        .marquee-item { display: inline-flex; align-items: center; gap: 10px; margin: 0 38px; white-space: nowrap;
+                        color: #9aa0ad; font-size: 20px; font-weight: 500; }
+        .marquee-item svg { width: 22px; height: 22px; flex: 0 0 auto; }
+        @keyframes marquee { to { transform: translateX(-50%); } }
+
+        @media (max-width: 991.98px) { .hero-main { padding: 40px 0; } .hero-art { max-width: 380px; margin-top: 30px; } }
+        @media (prefers-reduced-motion: reduce) {
+            .marquee-track { animation: none; }
+            .pg-loader { animation-duration: 1.8s; }
+        }
+
     </style>
 </head>
-<body>
+<body class="modo-inicio">
 
 <header class="topbar">
-    <div class="container py-3">
-        <!-- Reemplaza el <svg> por tu logo si lo deseas: <img src="/static/logo.png" alt="PhishGuard" width="38"> -->
-        <a class="logo" href="/" aria-label="PhishGuard, inicio">
+    <div class="container py-3 d-flex align-items-center justify-content-between gap-3">
+        <a class="logo" href="#inicio" data-vista="inicio" aria-label="PhishGuard, inicio">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <path d="M12 2 4 5v6c0 5.25 3.4 9.74 8 11 4.6-1.26 8-5.75 8-11V5l-8-3z" fill="url(#gl)"/>
                 <path d="m8.6 12 2.4 2.4 4.6-4.8" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -90,52 +162,152 @@
             </svg>
             <span><span class="logo-nombre">Phish<em>Guard</em></span><span class="logo-tag">Detección de phishing con reglas e IA</span></span>
         </a>
+        <button type="button" class="btn btn-primary btn-top" data-vista="analizador">Analizar</button>
     </div>
 </header>
 
-<main class="container py-4 py-lg-5">
-    <div class="row g-4">
 
-        <!-- ============ ENTRADA ============ -->
-        <div class="col-lg-5">
-            <div class="panel panel-sticky">
-                <h1 class="h4 fw-bold mb-1">Analiza un enlace o mensaje</h1>
-                <p class="text-secondary small mb-3">Pega una URL o el texto completo de un correo, SMS o mensaje sospechoso.</p>
-
-                <div class="btn-group w-100 mb-3" role="group" aria-label="Tipo de contenido">
-                    <input type="radio" class="btn-check" name="tipo" id="t-url" value="url" checked>
-                    <label class="btn btn-outline-primary" for="t-url">URL</label>
-                    <input type="radio" class="btn-check" name="tipo" id="t-correo" value="correo">
-                    <label class="btn btn-outline-primary" for="t-correo">Correo</label>
-                    <input type="radio" class="btn-check" name="tipo" id="t-mensaje" value="mensaje">
-                    <label class="btn btn-outline-primary" for="t-mensaje">SMS / mensaje</label>
+<!-- =======================================================
+     INICIO
+     ======================================================= -->
+<section id="vista-inicio" class="vista activa hero" aria-labelledby="titulo-inicio">
+    <div class="hero-main">
+        <div class="container">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-6 offset-lg-1">
+                    <h1 id="titulo-inicio">Piensa antes<br>de hacer <em>clic</em></h1>
+                    <p class="hero-sub">Pega un enlace, correo o mensaje y conoce su nivel de riesgo en segundos.</p>
+                    <button type="button" class="btn btn-primary btn-hero" data-vista="analizador">Analizar ahora</button>
                 </div>
-
-                <label for="contenido" class="form-label fw-semibold">Contenido a analizar</label>
-                <textarea id="contenido" class="form-control" spellcheck="false" maxlength="5000"
-                          placeholder="https://ejemplo-banco.com/login-verificacion"></textarea>
-                <div class="d-flex justify-content-between mt-2 small text-secondary">
-                    <span>Ejemplos: <button type="button" class="ejemplo" data-ej="url">URL sospechosa</button> ·
-                        <button type="button" class="ejemplo" data-ej="correo">correo de phishing</button></span>
-                    <span id="contador">0 / 5000</span>
-                </div>
-
-                <button id="btnAnalizar" class="btn btn-primary btn-analizar w-100 mt-3" type="button">Analizar amenaza</button>
-                <p class="small text-secondary mt-2 mb-0">Atajo: Ctrl + Enter. Los datos personales (correos, teléfonos, documentos, tarjetas) se enmascaran antes de consultar a la IA.</p>
-            </div>
-        </div>
-
-        <!-- ============ RESULTADOS ============ -->
-        <div class="col-lg-7">
-            <div id="resultado" aria-live="polite">
-                <div class="seccion text-secondary">
-                    <h2>Aquí verás el resultado</h2>
-                    Recibirás un puntaje de riesgo de 0 a 100, las palabras y patrones sospechosos resaltados en tu texto,
-                    la antigüedad y el certificado del dominio, y un reporte PDF descargable.
+                <div class="col-lg-5">
+                    <svg class="hero-art" viewBox="0 0 520 480" fill="none" aria-hidden="true">
+                        <g stroke="#e8ecf5" stroke-opacity=".85" stroke-width="1.2" stroke-linejoin="round">
+                            <!-- lateral del monitor -->
+                            <polygon points="400,268 420,279 420,459 400,448" fill="#0b0b0e"/>
+                            <!-- pantalla (plano isométrico) -->
+                            <g transform="matrix(1 .57 0 1 60 72)">
+                                <rect width="340" height="180" fill="#08080b"/>
+                                <rect x="0" y="0" width="340" height="16" fill="#0d0d11"/>
+                                <circle cx="300" cy="8" r="2" fill="#e8ecf5"/><circle cx="308" cy="8" r="2" fill="#e8ecf5"/><circle cx="316" cy="8" r="2" fill="#e8ecf5"/>
+                                <rect x="10" y="26" width="205" height="68" fill="#0d0d11" stroke-opacity=".35"/>
+                                <rect x="10" y="100" width="205" height="68" fill="#0d0d11" stroke-opacity=".35"/>
+                                <rect x="225" y="26" width="105" height="142" fill="#0d0d11" stroke-opacity=".35"/>
+                                <!-- puntos azules -->
+                                <ellipse cx="170" cy="60" rx="6" ry="9" fill="#2f6bff" stroke="none"/>
+                                <ellipse cx="190" cy="135" rx="6" ry="9" fill="#2f6bff" stroke="none"/>
+                                <ellipse cx="205" cy="38" rx="6" ry="9" fill="#2f6bff" stroke="none"/>
+                                <g fill="#2f6bff" stroke="none">
+                                    <circle cx="300" cy="50" r="3.5"/><circle cx="300" cy="66" r="3.5"/><circle cx="300" cy="82" r="3.5"/>
+                                    <circle cx="300" cy="112" r="3.5"/><circle cx="300" cy="128" r="3.5"/><circle cx="300" cy="144" r="3.5"/>
+                                </g>
+                                <g stroke-opacity=".3"><line x1="240" y1="50" x2="282" y2="50"/><line x1="240" y1="66" x2="282" y2="66"/><line x1="240" y1="82" x2="282" y2="82"/><line x1="240" y1="112" x2="282" y2="112"/><line x1="240" y1="128" x2="282" y2="128"/><line x1="240" y1="144" x2="282" y2="144"/></g>
+                                <!-- escudo con huella -->
+                                <path d="M110 52 160 68v36c0 26-20 44-50 54-30-10-50-28-50-54V68z" fill="#0a1430" stroke="#f3f6ff" stroke-width="1.6"/>
+                                <g stroke="#2f6bff" stroke-width="2" stroke-linecap="round">
+                                    <path d="M88 108a22 22 0 0 1 44 0"/><path d="M95 112a15 15 0 0 1 30 0v8"/><path d="M102 118a8 8 0 0 1 16 0v10"/>
+                                    <path d="M84 116v6"/><path d="M128 118v12"/><path d="M110 112v20"/>
+                                </g>
+                            </g>
+                            <!-- plataforma superior con nube -->
+                            <polygon points="352,268 408,296 464,268 408,240" fill="#101015"/>
+                            <polygon points="352,268 352,284 408,312 408,296" fill="#0b0b0e"/>
+                            <polygon points="408,296 408,312 464,284 464,268" fill="#0b0b0e"/>
+                            <path d="M383 262a14 14 0 0 1 4-27 17 17 0 0 1 32 4 12 12 0 0 1 1 23z" fill="#0d0d11"/>
+                            <g stroke="#2f6bff" stroke-width="1.5"><path d="M394 252a9 9 0 0 1 18 0"/><path d="M397 254a6 6 0 0 1 12 0"/><path d="M400 257a3 3 0 0 1 6 0"/></g>
+                            <!-- base con candado -->
+                            <polygon points="390,452 470,492 550,452 470,412" fill="#101015" transform="translate(-60 -4) scale(.85)"/>
+                            <g transform="translate(398 380)">
+                                <path d="M14 30V14a14 14 0 0 1 28 0v16" fill="none" stroke-width="3"/>
+                                <polygon points="8,30 46,50 46,100 8,80" fill="#0b0b0e"/>
+                                <polygon points="46,50 62,42 62,92 46,100" fill="#15151a"/>
+                                <polygon points="8,30 24,22 62,42 46,50" fill="#111116"/>
+                            </g>
+                            <!-- escudo pequeño izquierdo -->
+                            <g transform="translate(20 330)">
+                                <path d="M8 40 60 10l58 28v24L68 92 8 62z" fill="#0d0d11"/>
+                                <path d="M8 62 68 92l50-30v12L68 106 8 76z" fill="#0b0b0e"/>
+                                <ellipse cx="62" cy="48" rx="20" ry="11" fill="#0a1430"/>
+                                <ellipse cx="62" cy="48" rx="13" ry="7" fill="#2f6bff" stroke="none"/>
+                            </g>
+                        </g>
+                    </svg>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="marquee" aria-label="Capacidades de PhishGuard">
+        <div class="marquee-track" id="marqueeTrack">
+            <span class="marquee-item"><svg viewBox="0 0 24 24" fill="#2f6bff"><path d="M12 2 4 5v6c0 5.25 3.4 9.74 8 11 4.6-1.26 8-5.75 8-11V5l-8-3z"/></svg>Análisis de URLs</span>
+            <span class="marquee-item"><svg viewBox="0 0 24 24" fill="#2f6bff"><path d="M12 2 4 5v6c0 5.25 3.4 9.74 8 11 4.6-1.26 8-5.75 8-11V5l-8-3z"/></svg>Antigüedad del dominio</span>
+            <span class="marquee-item"><svg viewBox="0 0 24 24" fill="#2f6bff"><path d="M12 2 4 5v6c0 5.25 3.4 9.74 8 11 4.6-1.26 8-5.75 8-11V5l-8-3z"/></svg>Certificados SSL/TLS</span>
+            <span class="marquee-item"><svg viewBox="0 0 24 24" fill="#2f6bff"><path d="M12 2 4 5v6c0 5.25 3.4 9.74 8 11 4.6-1.26 8-5.75 8-11V5l-8-3z"/></svg>Typosquatting</span>
+            <span class="marquee-item"><svg viewBox="0 0 24 24" fill="#2f6bff"><path d="M12 2 4 5v6c0 5.25 3.4 9.74 8 11 4.6-1.26 8-5.75 8-11V5l-8-3z"/></svg>Reglas de seguridad</span>
+            <span class="marquee-item"><svg viewBox="0 0 24 24" fill="#2f6bff"><path d="M12 2 4 5v6c0 5.25 3.4 9.74 8 11 4.6-1.26 8-5.75 8-11V5l-8-3z"/></svg>Inteligencia artificial</span>
+            <span class="marquee-item"><svg viewBox="0 0 24 24" fill="#2f6bff"><path d="M12 2 4 5v6c0 5.25 3.4 9.74 8 11 4.6-1.26 8-5.75 8-11V5l-8-3z"/></svg>Enmascaramiento de datos</span>
+            <span class="marquee-item"><svg viewBox="0 0 24 24" fill="#2f6bff"><path d="M12 2 4 5v6c0 5.25 3.4 9.74 8 11 4.6-1.26 8-5.75 8-11V5l-8-3z"/></svg>Reporte PDF</span>
+        </div>
+    </div>
+</section>
+
+<main class="container py-4 py-lg-5">
+
+    <section id="vista-analizador" class="vista" aria-labelledby="titulo-analizador">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-2 mb-3">
+            <div>
+                <h1 id="titulo-analizador" class="h3 fw-bold mb-1">Analizador de phishing</h1>
+                <p class="text-secondary mb-0">Analiza una URL, correo o SMS y revisa la evidencia encontrada.</p>
+            </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-vista="inicio">
+                ← Volver al inicio
+            </button>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="panel panel-sticky">
+                    <h2 class="h4 fw-bold mb-1">Nuevo análisis</h2>
+                    <p class="text-secondary small mb-3">Pega una URL o el texto completo de un correo, SMS o mensaje sospechoso.</p>
+
+                    <div class="btn-group w-100 mb-3" role="group" aria-label="Tipo de contenido">
+                        <input type="radio" class="btn-check" name="tipo" id="t-url" value="url" checked>
+                        <label class="btn btn-outline-primary" for="t-url">URL</label>
+                        <input type="radio" class="btn-check" name="tipo" id="t-correo" value="correo">
+                        <label class="btn btn-outline-primary" for="t-correo">Correo</label>
+                        <input type="radio" class="btn-check" name="tipo" id="t-mensaje" value="mensaje">
+                        <label class="btn btn-outline-primary" for="t-mensaje">SMS / mensaje</label>
+                    </div>
+
+                    <label for="contenido" class="form-label fw-semibold">Contenido a analizar</label>
+                    <textarea id="contenido" class="form-control" spellcheck="false" maxlength="5000"
+                              placeholder="https://ejemplo-banco.com/login-verificacion"></textarea>
+                    <div class="d-flex justify-content-between mt-2 small text-secondary">
+                        <span>Ejemplos: <button type="button" class="ejemplo" data-ej="url">URL sospechosa</button> ·
+                            <button type="button" class="ejemplo" data-ej="correo">correo de phishing</button></span>
+                        <span id="contador">0 / 5000</span>
+                    </div>
+
+                    <button id="btnAnalizar" class="btn btn-primary btn-analizar w-100 mt-3" type="button">
+                        Analizar amenaza
+                    </button>
+                    <p class="small text-secondary mt-2 mb-0">
+                        Atajo: Ctrl + Enter. Los datos personales (correos, teléfonos, documentos, tarjetas)
+                        se enmascaran antes de consultar a la IA.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div id="resultado" aria-live="polite">
+                    <div class="seccion text-secondary">
+                        <h2>Aquí verás el resultado</h2>
+                        Recibirás un puntaje de riesgo de 0 a 100, las palabras y patrones sospechosos resaltados en tu texto,
+                        la antigüedad y el certificado del dominio, y un reporte PDF descargable.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 </main>
 
 <footer class="text-center py-4">
@@ -210,7 +382,7 @@ function bloqueVeredicto(d) {
             <div class="flex-grow-1" style="min-width:220px">
                 <div class="titulo-nivel">${esc(titulo)}</div>
                 <div class="mb-2">${esc(sub)}</div>
-                <button type="button" class="btn btn-sm btn-dark" id="btn-pdf">Descargar reporte PDF</button>
+                <a class="btn btn-sm btn-dark" href="/api/report/${esc(d.id_analisis)}" download>Descargar reporte PDF</a>
                 ${ia.desde_cache ? '<span class="badge text-bg-light border ms-2">Respuesta en caché</span>' : ''}
                 ${avisoIA}
             </div>
@@ -289,39 +461,6 @@ function mostrarMensaje(titulo, detalle) {
     cont.innerHTML = `<div class="veredicto nivel-ALTO"><div class="titulo-nivel">${esc(titulo)}</div><div>${esc(detalle)}</div></div>`;
 }
 
-async function descargarPdf(d, boton) {
-    const etiquetaPdf = boton.textContent;
-    boton.disabled = true;
-    boton.textContent = 'Generando PDF…';
-    try {
-        const resp = await fetch('/api/report', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: d.token_reporte })
-        });
-        if (!resp.ok) {
-            let msg = 'No se pudo generar el PDF.';
-            try { msg = (await resp.json()).message || msg; } catch (_) {}
-            alert(msg);
-            return;
-        }
-        const blob = await resp.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'PhishGuard_reporte_' + String(d.id_analisis || '').slice(0, 8) + '.pdf';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 2000);
-    } catch (err) {
-        console.error(err);
-        alert('Error de conexión al generar el PDF.');
-    } finally {
-        boton.disabled = false;
-        boton.textContent = etiquetaPdf;
-    }
-}
-
 async function analizar() {
     const contenido = area.value.trim();
     const tipo = document.querySelector('input[name="tipo"]:checked').value;
@@ -329,8 +468,33 @@ async function analizar() {
 
     const etiqueta = btn.textContent;
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Analizando…';
-    cont.innerHTML = '<div class="seccion"><b>Analizando reglas, dominio, certificado e IA…</b><div class="small text-secondary">Puede tardar unos segundos si el dominio responde lento.</div></div>';
+    btn.innerHTML = '<span class="pg-loader me-2" style="width:16px;height:16px;border-width:2px;border-top-color:#fff;border-left-color:rgba(255,255,255,.35);border-right-color:rgba(255,255,255,.35);border-bottom-color:rgba(255,255,255,.35);" aria-hidden="true"></span>Analizando…';
+    cont.innerHTML = `
+        <div class="seccion">
+            <div class="loading-state">
+                <span class="pg-loader" aria-hidden="true"></span>
+                <div>
+                    <b id="textoCarga">Analizando reglas locales…</b>
+                    <div class="small text-secondary">Estamos revisando la evidencia. No cierres esta ventana.</div>
+                </div>
+            </div>
+        </div>`;
+
+    const mensajesCarga = [
+        'Analizando reglas locales…',
+        'Revisando enlaces y dominios…',
+        'Verificando infraestructura…',
+        'Consultando inteligencia artificial…',
+        'Preparando el resultado…'
+    ];
+    let pasoCarga = 0;
+    const intervaloCarga = window.setInterval(() => {
+        const el = document.getElementById('textoCarga');
+        if (el) {
+            pasoCarga = (pasoCarga + 1) % mensajesCarga.length;
+            el.textContent = mensajesCarga[pasoCarga];
+        }
+    }, 1800);
 
     try {
         const resp = await fetch('/api/analyze', {
@@ -341,16 +505,66 @@ async function analizar() {
         if (!d.success) { mostrarMensaje('No se pudo analizar', d.message || 'Respuesta inválida del servidor.'); return; }
 
         cont.innerHTML = `<div class="d-grid gap-3">${bloqueVeredicto(d)}${bloqueTexto(d)}${bloqueUrls(d)}${bloqueIA(d)}${bloquePrivacidad(d)}</div>`;
-        const btnPdf = document.getElementById('btn-pdf');
-        if (btnPdf) btnPdf.addEventListener('click', () => descargarPdf(d, btnPdf));
     } catch (err) {
         console.error(err);
-        mostrarMensaje('Error de conexión', 'No se pudo contactar con el servidor. Inténtalo de nuevo en unos segundos.');
+        mostrarMensaje('Error de conexión', 'No se pudo contactar con el servidor. Comprueba que Flask esté en ejecución.');
     } finally {
+        window.clearInterval(intervaloCarga);
         btn.disabled = false;
         btn.textContent = etiqueta;
     }
 }
+
+/* ---------- Carrusel: se duplica el contenido para el bucle continuo ---------- */
+const pista = document.getElementById('marqueeTrack');
+if (pista) pista.innerHTML += pista.innerHTML;
+
+/* ---------- Navegación entre Inicio y Analizador ---------- */
+function cambiarVista(nombre) {
+    const inicio = document.getElementById('vista-inicio');
+    const analizador = document.getElementById('vista-analizador');
+    const vistas = { inicio, analizador };
+
+    document.body.classList.toggle('modo-inicio', nombre === 'inicio');
+
+    Object.entries(vistas).forEach(([key, el]) => {
+        if (el) el.classList.toggle('activa', key === nombre);
+    });
+
+    document.querySelectorAll('[data-vista]').forEach(el => {
+        if (el.classList.contains('nav-link')) {
+            el.classList.toggle('active', el.dataset.vista === nombre);
+        }
+    });
+
+    if (window.location.hash !== '#' + nombre) {
+        history.replaceState(null, '', '#' + nombre);
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (nombre === 'analizador') {
+        window.setTimeout(() => area.focus({ preventScroll: true }), 100);
+    }
+}
+
+document.querySelectorAll('[data-vista]').forEach(el => {
+    el.addEventListener('click', event => {
+        const destino = el.dataset.vista;
+        if (!destino) return;
+        event.preventDefault();
+        cambiarVista(destino);
+    });
+});
+
+window.addEventListener('hashchange', () => {
+    const nombre = window.location.hash.replace('#', '');
+    cambiarVista(nombre === 'analizador' ? 'analizador' : 'inicio');
+});
+
+const vistaInicial = window.location.hash === '#analizador' ? 'analizador' : 'inicio';
+cambiarVista(vistaInicial);
+
 </script>
 </body>
 </html>
