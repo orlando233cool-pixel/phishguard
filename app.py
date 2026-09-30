@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 
 load_dotenv()  # Carga las variables desde el archivo .env
 
+import io
 import os
 import re
 import json
